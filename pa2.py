@@ -67,12 +67,21 @@ def constructFactorGraph(yTilde, H, epsilon):
     graph.var = range(M)
 
     ##############################################################
-    # Todo: your code starts here
     # Add unary factors
+    for i in range(M):
+        if yTilde[i] == 0:
+            val = [1 - epsilon, epsilon]
+        else:
+            val = [epsilon, 1 - epsilon]
+        graph.addFactor(Factor(scope=[i],card=[2], val=np.array(val),name=f"unary{i}"))
     # Add parity factors
-    #
-    # ....
-    #
+    for i in range(N):
+        scope = np.where(H[i,:] == 1)[0]
+        all_placments = list(itertools.product([0,1], repeat=len(scope)))
+        val = np.zeros([2]*len(scope))
+        for placement in all_placments:
+            val[placement] = 1 - (np.sum(np.array(placement)) % 2)
+        graph.addFactor(Factor(scope=scope, card=[2]*len(scope), val=val, name=f"parity{i}"))
     ##############################################################
     return graph
 
@@ -85,17 +94,16 @@ def q1():
     epsilon = 0.05
     graph = constructFactorGraph(yTilde, H, epsilon)
     ##############################################################
-    # Todo: your code starts here
     # Design two invalid codewords ytest1, ytest2 and one valid codewords ytest3.
     # Report their weights (joint probability values) respectively.
-    #
-    # ....
-    #
+    ytest1 = [0,1,0,0,0,0]
+    ytest2 = [1,1,1,1,1,1]
+    ytest3 = [0,1,1,1,0,1]
     ##############################################################
-    # print(
-    #     graph.evaluateWeight(ytest1),
-    #     graph.evaluateWeight(ytest2),
-    #     graph.evaluateWeight(ytest3))
+    print(
+        graph.evaluateWeight(ytest1),
+        graph.evaluateWeight(ytest2),
+        graph.evaluateWeight(ytest3))
     ##############################################################
 
 
@@ -111,14 +119,15 @@ def q3(epsilon):
     x = np.zeros((N, 1), dtype='int32')
     y = encodeMessage(x, G)
     ##############################################################
-    # Todo: your code starts here
-    #
-    # ....
-    #
+    y_tilde = applyChannelNoise(y, epsilon)
+    graph = constructFactorGraph(y_tilde, H, epsilon)
+    graph.runParallelLoopyBP(50)
+    marginals = np.apply_along_axis(graph.estimateMarginalProbability, 0, np.arange(len(y)).reshape(1,len(y)))
+
     ##############################################################
     plt.figure()
     plt.title(f'q(3): Marginals for all-ones input, epsilon={epsilon}')
-    plt.plot(range(len(y)), marginals, '.-')
+    plt.plot(range(len(y)), marginals[1,:], '.-')
     plt.savefig(f'q3_{epsilon}.png', bbox_inches='tight')
     plt.show()
     ##############################################################
@@ -197,18 +206,18 @@ def show_image(output, loc, title, num_locs=8):
 
 
 if __name__ == "__main__":
-    print('Running q(1): Should see 0.0, 0.0, >0.0')
-    q1()
+    # print('Running q(1): Should see 0.0, 0.0, >0.0')
+    # q1()
 
     print('Running q(3):')
     for epsilon in [0.05, 0.06, 0.08, 0.1]:
         q3(epsilon)
 
-    print('Running q(4):')
-    for epsilon in [0.05, 0.06, 0.08, 0.1]:
-        q4(10, epsilon)
-
-    print('Running q(6):')
-    q6(0.06)
-
-    print('All done.')
+    # print('Running q(4):')
+    # for epsilon in [0.05, 0.06, 0.08, 0.1]:
+    #     q4(10, epsilon)
+    #
+    # print('Running q(6):')
+    # q6(0.06)
+    #
+    # print('All done.')

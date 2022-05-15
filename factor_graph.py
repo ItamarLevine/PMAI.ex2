@@ -8,6 +8,7 @@ import functools
 import numpy as np
 from factors import *
 
+
 class FactorGraph:
     def __init__(self, numVar=0, numFactor=0):
         '''
@@ -37,7 +38,9 @@ class FactorGraph:
         self.factors = []
         self.messagesVarToFactor = {}
         self.messagesFactorToVar = {}
-    
+        self.belief = [None for _ in range(numFactor)]
+        self.belief_vars = [None for _ in range(numVar)]
+
     def addFactor(self, factor):
         '''
         :param factor: a Factor object
@@ -101,18 +104,41 @@ class FactorGraph:
         Note: You can also calculate the marginal MAPs after each iteration here...
         '''
         ###############################################################################
+        # initialize messages = 1
+        for i, f in enumerate(self.factors):
+            for var in f.scope:
+                self.getInMessage(i, var, "factorToVar")
+                self.getInMessage(var, i)
         for it in range(iterations):
             print('.', end='', flush=True)
             if (it+1) % 5 == 0:
                 print(it+1, end='', flush=True)
             ##############################################################
-            # Todo: your code starts here
-            # create variable-to-factor messages
-            # create factor-to-variable messages
-            #
-            # ....
-            #
+            for var in self.var:
+                for factor in self.varToFactor[var]:
+                    # create variable-to-factor messages
+                    other_factors = np.setdiff1d(self.varToFactor[var],factor)
+                    m = self.messagesFactorToVar[(other_factors[0], var)]
+                    for i in range(1, len(other_factors)):
+                        m = m.multiply(self.messagesFactorToVar[(other_factors[i], var)])
+                    m = m.normalize()
+                    self.messagesVarToFactor[(var, factor)] = m
+                    # create factor-to-variable messages
+                    other_vars = np.setdiff1d(self.factorToVar[factor], var)
+                    m = self.factors[factor]
+                    for i in range(0, len(other_vars)):
+                        m = m.multiply(self.messagesVarToFactor[(other_vars[i], factor)])
+                    m = m.marginalize_all_but([var])
+                    m = m.normalize()
+                    self.messagesFactorToVar[(factor, var)] = m
             ##############################################################
+        # calculate_beliefs
+        for i in range(len(self.var)):
+            m = self.messagesFactorToVar[(self.varToFactor[i][0],self.var[i])]
+            for j in range(1,len(self.varToFactor[i])):
+                m = m.multiply(self.messagesFactorToVar[(self.varToFactor[i][j], self.var[i])])
+            m = m.normalize()
+            self.belief_vars[i] = m
         print()
 
         ###############################################################################
@@ -127,15 +153,12 @@ class FactorGraph:
                 that the variable takes the values 0 and 1
         
         example: 
-        >>> factor_graph.estimateMarginalProbability(0)
-        >>> [0.2, 0.8]
+        factor_graph.estimateMarginalProbability(0) =
+        [0.2, 0.8]
         '''
-        ###############################################################################
-        # Todo: your code here
-        #
-        # ....
-        #
-        ###############################################################################
+        if type(var) != int:
+            var = var[0]
+        return [self.belief_vars[var].val[i] for i in [0,1]]
 
     def getMarginalMAP(self):
         '''
@@ -143,8 +166,8 @@ class FactorGraph:
         You may utilize the method estimateMarginalProbability.
         
         example: (N=2, 2*N=4)
-        >>> factor_graph.getMarginalMAP()
-        >>> [0, 1, 0, 0]
+        factor_graph.getMarginalMAP() =
+        [0, 1, 0, 0]
         '''
         ###############################################################################
         # Todo: your code here
