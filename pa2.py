@@ -175,23 +175,25 @@ def q6(epsilon):
     N = G.shape[1]
     x = img.reshape(N, 1)
     y = encodeMessage(x, G)
-    yTilde = applyChannelNoise(y, epsilon)
-
+    y_tilde = applyChannelNoise(y, epsilon)
+    graph = constructFactorGraph(y_tilde, H, epsilon)
     plt.figure()
     plt.title(f'q(6): Image reconstruction, epsilon={epsilon}')
-    show_image(yTilde, 0, 'Input')
+    show_image(y_tilde, 0, 'Input')
 
     plot_iters = [0, 1, 3, 5, 10, 20, 30]
 
     ##############################################################
     # Todo: your code starts here
-    #
-    # ....
-    #
+    graph.runParallelLoopyBP(0)
+    result = graph.getMarginalMAP()
+    show_image(np.array(result), 1, f'Iter {plot_iters[0]}')
+    for i in range(1,31):
+        graph.runParallelLoopyBP(1)
+        if i in plot_iters:
+            result = graph.getMarginalMAP()
+            show_image(np.array(result), plot_iters.index(i)+1, f'Iter {i}')
     ##############################################################
-    # plot_iters = np.array([0, 1, 3, 5, 10, 20, 30])
-    # for i, result in enumerate(results[plot_iters]):
-    #     show_image(result, i+1, f'Iter {plot_iters[i]}')
     plt.savefig(f'q6_{epsilon}.png', bbox_inches='tight')
     plt.show()
     ################################################################
@@ -208,18 +210,18 @@ def show_image(output, loc, title, num_locs=8):
 
 
 if __name__ == "__main__":
-    # print('Running q(1): Should see 0.0, 0.0, >0.0')
-    # q1()
+    print('Running q(1): Should see 0.0, 0.0, >0.0')
+    q1()
 
-    # print('Running q(3):')
-    # for epsilon in [0.05, 0.06, 0.08, 0.1]:
-    #     q3(epsilon)
+    print('Running q(3):')
+    for epsilon in [0.05, 0.06, 0.08, 0.1]:
+        q3(epsilon)
 
     print('Running q(4):')
     for epsilon in [0.05, 0.06, 0.08, 0.1]:
         q4(10, epsilon)
-    #
-    # print('Running q(6):')
-    # q6(0.06)
-    #
-    # print('All done.')
+
+    print('Running q(6):')
+    q6(0.06)
+
+    print('All done.')
