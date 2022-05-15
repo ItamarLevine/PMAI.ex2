@@ -110,7 +110,7 @@ class FactorGraph:
                 self.getInMessage(i, var, "factorToVar")
                 self.getInMessage(var, i)
         for it in range(iterations):
-            print('.', end='', flush=True)
+            # print('.', end='', flush=True)
             if (it+1) % 5 == 0:
                 print(it+1, end='', flush=True)
             ##############################################################
@@ -139,7 +139,7 @@ class FactorGraph:
                 m = m.multiply(self.messagesFactorToVar[(self.varToFactor[i][j], self.var[i])])
             m = m.normalize()
             self.belief_vars[i] = m
-        print()
+        #print()
 
         ###############################################################################
 
@@ -170,10 +170,7 @@ class FactorGraph:
         [0, 1, 0, 0]
         '''
         ###############################################################################
-        # Todo: your code here
-        #
-        # ....
-        #
+        return [np.argmax(self.estimateMarginalProbability(self.var[i])) for i in range(len(self.var))]
         ###############################################################################
 
     def print(self):

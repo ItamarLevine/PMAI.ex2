@@ -143,20 +143,22 @@ def q4(numTrials, epsilon, iterations=50):
     N = G.shape[1]
     x = np.zeros((N, 1), dtype='int32')
     y = encodeMessage(x, G)
-
     plt.figure()
     plt.title(f'q(4): Hamming distances, epsilon={epsilon}')
     for trial in range(numTrials):
         print('Trial number', trial)
         ##############################################################
-        # Todo: your code starts here
         # apply noise, construct the graph
         # run loopy while retrieving the marginal MAP after each iteration
         # calculate Hamming distances and plot
-        #
-        # ....
-        #
-        # plt.plot(hamming_distances)
+        y_tilde = applyChannelNoise(y, epsilon)
+        graph = constructFactorGraph(y_tilde, H, epsilon)
+        hamming_distances = []
+        for _ in range(iterations):
+            graph.runParallelLoopyBP(1)
+            estimate_y = graph.getMarginalMAP()
+            hamming_distances.append(np.sum(estimate_y != y.reshape(len(y),)))
+        plt.plot(range(iterations),hamming_distances)
     plt.grid(True)
     plt.savefig(f'q4_{epsilon}.png', bbox_inches='tight')
     plt.show()
@@ -209,13 +211,13 @@ if __name__ == "__main__":
     # print('Running q(1): Should see 0.0, 0.0, >0.0')
     # q1()
 
-    print('Running q(3):')
-    for epsilon in [0.05, 0.06, 0.08, 0.1]:
-        q3(epsilon)
-
-    # print('Running q(4):')
+    # print('Running q(3):')
     # for epsilon in [0.05, 0.06, 0.08, 0.1]:
-    #     q4(10, epsilon)
+    #     q3(epsilon)
+
+    print('Running q(4):')
+    for epsilon in [0.05, 0.06, 0.08, 0.1]:
+        q4(10, epsilon)
     #
     # print('Running q(6):')
     # q6(0.06)
